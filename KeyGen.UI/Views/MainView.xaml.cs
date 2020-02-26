@@ -3,10 +3,10 @@
 namespace KeyGen.UI
 {
 
-    public partial class MainWindow : Window
+    public partial class MainView : Window
     {
 
-        public MainWindow()
+        public MainView()
         {
             InitializeComponent();
         }
