@@ -3,8 +3,8 @@ using System;
 using System.Windows.Input;
 
 using PasswordsManager.Cryptography;
-using PasswordsManager.UI.Auxiliary.Commands;
-using PasswordsManager.UI.ViewModels.Base;
+using WPF.UI.Commands;
+using WPF.UI.ViewModels;
 
 namespace PasswordsManager.ViewModels
 {

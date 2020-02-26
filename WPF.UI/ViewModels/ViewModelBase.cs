@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel;
 
-namespace PasswordsManager.UI.ViewModels.Base
+namespace WPF.UI.ViewModels
 {
 
     public class ViewModelBase : INotifyPropertyChanged
     {
-        
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void NotifyPropertyChanged(params string[] propertiesNames)

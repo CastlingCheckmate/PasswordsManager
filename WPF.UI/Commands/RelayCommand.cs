@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace PasswordsManager.UI.Auxiliary.Commands
+namespace WPF.UI.Commands
 {
 
     public class RelayCommand : ICommand

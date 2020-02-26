@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:converters="clr-namespace:PasswordsManager.UI.Auxiliary.Converters"
+        xmlns:converters="clr-namespace:WPF.UI.Converters;assembly=WPF.UI"
         xmlns:viewModels="clr-namespace:PasswordsManager.ViewModels"
         xmlns:cryptography="clr-namespace:PasswordsManager.Cryptography;assembly=PasswordsManager.Cryptography"
         mc:Ignorable="d"
@@ -19,22 +19,18 @@
         <viewModels:MainViewModel />
     </Window.DataContext>
     <Window.Resources>
-        <Style TargetType="TextBox">
-            <Setter Property="Background"
-                    Value="LightGray" />
-            <Setter Property="BorderBrush"
-                    Value="Black" />
-            <Setter Property="IsReadOnly"
-                    Value="True" />
-        </Style>
-        <Style TargetType="Border">
-            <Setter Property="BorderBrush"
-                    Value="Black" />
-            <Setter Property="BorderThickness"
-                    Value="1" />
-            <Setter Property="Margin"
-                    Value="3" />
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/WPF.UI;component/Resources/Styles/Button.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/WPF.UI;component/Resources/Styles/TextBox.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Border">
+                <Setter Property="BorderBrush"
+                        Value="Black" />
+                <Setter Property="BorderThickness"
+                        Value="1" />
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
     <Border BorderThickness="2">
         <Grid>
@@ -60,11 +56,13 @@
             <TextBox Grid.Row="0"
                      Grid.Column="1"
                      Margin="0,3,0,3"
+                     Style="{StaticResource ReadOnlyTextBoxFlatStyle}"
                      Text="{Binding InputFileName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
             <Button Grid.Row="0"
                     Grid.Column="2"
                     Margin="3"
                     Content="Browse..."
+                    Style="{StaticResource ButtonFlatStyle}"
                     Command="{Binding BrowseForInputFileCommand}" />
             <Border Grid.Row="1"
                     Grid.Column="0"
@@ -147,11 +145,13 @@
             <TextBox Grid.Row="3"
                      Grid.Column="1"
                      Margin="0,3,0,3"
+                     Style="{StaticResource ReadOnlyTextBoxFlatStyle}"
                      Text="{Binding KeyFileName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
             <Button Grid.Row="3"
                     Grid.Column="2"
                     Margin="3"
                     Content="Browse..."
+                    Style="{StaticResource ButtonFlatStyle}"
                     Command="{Binding BrowseForKeyFileCommand}" />
             <Border Grid.Row="4"
                     Grid.Column="0"
@@ -201,11 +201,13 @@
             <TextBox Grid.Row="5"
                      Grid.Column="1"
                      Margin="0,3,0,3"
+                     Style="{StaticResource ReadOnlyTextBoxFlatStyle}"
                      Text="{Binding InitializationVectorFileName, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
             <Button Grid.Row="5"
                     Grid.Column="2"
                     Margin="3"
                     Content="Browse..."
+                    Style="{StaticResource ButtonFlatStyle}"
                     Command="{Binding BrowseForInitializationVectorFileCommand}"
                     IsEnabled="{Binding CipherMode, Converter={x:Static converters:ConvertersHost.ECBCipherModeToFalse}}">
             </Button>
@@ -214,6 +216,7 @@
                     Grid.ColumnSpan="3"
                     Margin="3"
                     Content="Load"
+                    Style="{StaticResource ButtonFlatStyle}"
                     Command="{Binding LoadCommand}" />
         </Grid>
     </Border>

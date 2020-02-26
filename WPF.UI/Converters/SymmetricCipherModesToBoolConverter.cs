@@ -4,7 +4,7 @@ using System.Windows.Data;
 
 using PasswordsManager.Cryptography;
 
-namespace PasswordsManager.UI.Auxiliary.Converters
+namespace WPF.UI.Converters
 {
 
     public sealed class SymmetricCipherModesToBoolConverter : IValueConverter
