@@ -6,6 +6,7 @@ using System.Windows.Input;
 
 using Extensions.ByteArrayExtensions;
 using Extensions.StringExtensions;
+using PasswordsManager.Cryptography;
 using WPF.UI.Commands;
 using WPF.UI.ViewModels;
 
@@ -26,6 +27,8 @@ namespace KeyGen.UI.ViewModels
         private ICommand _saveInitializationVectorCommand;
         private ICommand _clearKeyCommand;
         private ICommand _clearInitializationVectorCommand;
+        private RijndaelKeySizes _selectedKeySize;
+        private RijndaelBlockSizes _selectedBlockSize;
         private byte[] _generatedKey = null;
         private byte[] _generatedInitializationVector = null;
         private bool _isKeyMasked = true;
@@ -63,6 +66,40 @@ namespace KeyGen.UI.ViewModels
 
         public ICommand ClearInitializationVectorCommand =>
             _clearInitializationVectorCommand ?? (_clearInitializationVectorCommand = new RelayCommand(_ => GeneratedInitializationVector = null, _ => GeneratedInitializationVector != null));
+
+        public RijndaelKeySizes SelectedKeySize
+        {
+            get =>
+                _selectedKeySize;
+
+            set
+            {
+                if (SelectedKeySize == value)
+                {
+                    return;
+                }
+                _selectedKeySize = value;
+                GeneratedKey = null;
+                NotifyPropertyChanged(nameof(SelectedKeySize));
+            }
+        }
+
+        public RijndaelBlockSizes SelectedBlockSize
+        {
+            get =>
+                _selectedBlockSize;
+
+            set
+            {
+                if (SelectedBlockSize == value)
+                {
+                    return;
+                }
+                _selectedBlockSize = value;
+                GeneratedInitializationVector = null;
+                NotifyPropertyChanged(nameof(SelectedBlockSize));
+            }
+        }
 
         private byte[] GeneratedKey
         {
@@ -128,7 +165,7 @@ namespace KeyGen.UI.ViewModels
 
         private void GenerateKey()
         {
-            var result = new byte[24];
+            var result = new byte[(int)SelectedKeySize];
             RandomSource.NextBytes(result);
             IsKeyMasked = true;
             GeneratedKey = result;
@@ -136,8 +173,7 @@ namespace KeyGen.UI.ViewModels
 
         private void GenerateInitializationVector()
         {
-            // TODO: add radiogroup to store key/block sizes
-            var result = new byte[24];
+            var result = new byte[(int)SelectedBlockSize];
             RandomSource.NextBytes(result);
             IsInitializationVectorMasked = true;
             GeneratedInitializationVector = result;

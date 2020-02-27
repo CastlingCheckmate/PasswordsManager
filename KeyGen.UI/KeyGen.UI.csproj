@@ -104,6 +104,10 @@
       <Project>{a97082cc-3363-40e4-9a5e-72ce677ce438}</Project>
       <Name>Extensions</Name>
     </ProjectReference>
+    <ProjectReference Include="..\PasswordsManager.Cryptography\PasswordsManager.Cryptography.csproj">
+      <Project>{6252ce47-da65-4ecd-b8fe-c38c4f48b6ed}</Project>
+      <Name>PasswordsManager.Cryptography</Name>
+    </ProjectReference>
     <ProjectReference Include="..\WPF.UI\WPF.UI.csproj">
       <Project>{90c815d6-15c8-4818-b1e3-6e462f096a7a}</Project>
       <Name>WPF.UI</Name>
