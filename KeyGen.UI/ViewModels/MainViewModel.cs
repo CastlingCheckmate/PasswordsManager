@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
+using System.IO;
 using System.Linq;
 using System.Windows.Input;
 
@@ -22,8 +24,10 @@ namespace KeyGen.UI.ViewModels
         private ICommand _showOrHideInitializationVectorCommand;
         private ICommand _saveKeyCommand;
         private ICommand _saveInitializationVectorCommand;
-        private string _generatedKey = string.Empty;
-        private string _generatedInitializationVector = string.Empty;
+        private ICommand _clearKeyCommand;
+        private ICommand _clearInitializationVectorCommand;
+        private byte[] _generatedKey = null;
+        private byte[] _generatedInitializationVector = null;
         private bool _isKeyMasked = true;
         private bool _isInitializationVectorMasked = true;
 
@@ -40,44 +44,57 @@ namespace KeyGen.UI.ViewModels
         public ICommand GenerateInitializationVectorCommand =>
             _generateInitializationVectorCommand ?? (_generateInitializationVectorCommand = new RelayCommand(_ => GenerateInitializationVector()));
 
-
         public ICommand ShowOrHideKeyCommand =>
-            _showOrHideKeyCommand ?? (_showOrHideKeyCommand = new RelayCommand(_ => IsKeyMasked = !IsKeyMasked));
+            _showOrHideKeyCommand ?? (_showOrHideKeyCommand = new RelayCommand(_ => IsKeyMasked = !IsKeyMasked,
+                _ => GeneratedKey != null));
 
         public ICommand ShowOrHideInitializationVectorCommand =>
-            _showOrHideInitializationVectorCommand ?? (_showOrHideInitializationVectorCommand = new RelayCommand(_ => IsInitializationVectorMasked = !IsInitializationVectorMasked));
+            _showOrHideInitializationVectorCommand ?? (_showOrHideInitializationVectorCommand = new RelayCommand(_ => IsInitializationVectorMasked = !IsInitializationVectorMasked,
+                _ => GeneratedInitializationVector != null));
 
         public ICommand SaveKeyCommand =>
-            _saveKeyCommand ?? (_saveKeyCommand = new RelayCommand(_ => SaveKey(), _ => !string.IsNullOrEmpty(GeneratedKey)));
+            _saveKeyCommand ?? (_saveKeyCommand = new RelayCommand(_ => SaveKey(), _ => GeneratedKey != null));
 
         public ICommand SaveInitializationVectorCommand =>
-            _saveInitializationVectorCommand ?? (_saveInitializationVectorCommand = new RelayCommand(_ => SaveInitializationVector(), _ => !string.IsNullOrEmpty(GeneratedInitializationVector)));
+            _saveInitializationVectorCommand ?? (_saveInitializationVectorCommand = new RelayCommand(_ => SaveInitializationVector(), _ => GeneratedInitializationVector != null));
 
-        public string GeneratedKey
+        public ICommand ClearKeyCommand =>
+            _clearKeyCommand ?? (_clearKeyCommand = new RelayCommand(_ => GeneratedKey = null, _ => GeneratedKey != null));
+
+        public ICommand ClearInitializationVectorCommand =>
+            _clearInitializationVectorCommand ?? (_clearInitializationVectorCommand = new RelayCommand(_ => GeneratedInitializationVector = null, _ => GeneratedInitializationVector != null));
+
+        private byte[] GeneratedKey
         {
             get =>
-                string.Join(Environment.NewLine, (IsKeyMasked ? string.Concat(Enumerable.Repeat(PasswordChar, _generatedKey.Length)) : _generatedKey)
-                    .SplitByChunks(ChunkSize));
+                _generatedKey;
 
             set
             {
                 _generatedKey = value;
-                NotifyPropertyChanged(nameof(GeneratedKey));
+                NotifyPropertyChanged(nameof(GeneratedKey), nameof(GeneratedKeyString));
             }
         }
 
-        public string GeneratedInitializationVector
+        public string GeneratedKeyString =>
+            GeneratedKey == null ? string.Empty : string.Join(Environment.NewLine, (IsKeyMasked ? string.Concat(Enumerable.Repeat(PasswordChar, _generatedKey.Length * 2)) :
+                _generatedKey.ToHexadecimalString()).SplitByChunks(ChunkSize));
+
+        private byte[] GeneratedInitializationVector
         {
             get =>
-                string.Join(Environment.NewLine, (IsInitializationVectorMasked ? string.Concat(Enumerable.Repeat(PasswordChar, _generatedInitializationVector.Length)) : _generatedInitializationVector)
-                    .SplitByChunks(ChunkSize));
+                _generatedInitializationVector;
 
             set
             {
                 _generatedInitializationVector = value;
-                NotifyPropertyChanged(nameof(GeneratedInitializationVector));
+                NotifyPropertyChanged(nameof(GeneratedInitializationVector), nameof(GeneratedInitializationVectorString));
             }
         }
+
+        public string GeneratedInitializationVectorString =>
+            GeneratedInitializationVector == null ? string.Empty : string.Join(Environment.NewLine, (IsInitializationVectorMasked ? string.Concat(Enumerable.Repeat(PasswordChar, _generatedInitializationVector.Length * 2)) :
+                _generatedInitializationVector.ToHexadecimalString()).SplitByChunks(ChunkSize));
 
         public bool IsKeyMasked
         {
@@ -87,7 +104,7 @@ namespace KeyGen.UI.ViewModels
             set
             {
                 _isKeyMasked = value;
-                NotifyPropertyChanged(nameof(IsKeyMasked), nameof(ShowOrHideKey), nameof(GeneratedKey));
+                NotifyPropertyChanged(nameof(IsKeyMasked), nameof(ShowOrHideKey), nameof(GeneratedKeyString));
             }
         }
 
@@ -102,7 +119,7 @@ namespace KeyGen.UI.ViewModels
             set
             {
                 _isInitializationVectorMasked = value;
-                NotifyPropertyChanged(nameof(IsInitializationVectorMasked), nameof(ShowOrHideInitializationVector), nameof(GeneratedInitializationVector));
+                NotifyPropertyChanged(nameof(IsInitializationVectorMasked), nameof(ShowOrHideInitializationVector), nameof(GeneratedInitializationVectorString));
             }
         }
 
@@ -114,7 +131,7 @@ namespace KeyGen.UI.ViewModels
             var result = new byte[24];
             RandomSource.NextBytes(result);
             IsKeyMasked = true;
-            GeneratedKey = result.ToHexadecimalString();
+            GeneratedKey = result;
         }
 
         private void GenerateInitializationVector()
@@ -123,17 +140,57 @@ namespace KeyGen.UI.ViewModels
             var result = new byte[24];
             RandomSource.NextBytes(result);
             IsInitializationVectorMasked = true;
-            GeneratedInitializationVector = result.ToHexadecimalString();
+            GeneratedInitializationVector = result;
         }
 
         private void SaveKey()
         {
-            
+            var saveFileDialog = new SaveFileDialog()
+            {
+                InitialDirectory = Environment.CurrentDirectory,
+                OverwritePrompt = true,
+                Title = "Saving key to...",
+                AddExtension = true,
+                Filter = "Rijndael key file (*.rijnkey)|*.rijnkey",
+                CheckFileExists = false
+            };
+            if (!saveFileDialog.ShowDialog().Value)
+            {
+                return;
+            }
+            if (File.Exists(saveFileDialog.FileName))
+            {
+                File.Delete(saveFileDialog.FileName);
+            }
+            using (var keyFileStream = new BinaryWriter(new FileStream(saveFileDialog.FileName, FileMode.CreateNew)))
+            {
+                keyFileStream.Write(GeneratedKey);
+            }
         }
 
         private void SaveInitializationVector()
         {
-
+            var saveFileDialog = new SaveFileDialog()
+            {
+                InitialDirectory = Environment.CurrentDirectory,
+                OverwritePrompt = true,
+                Title = "Saving IV to...",
+                AddExtension = true,
+                Filter = "Rijndael IV file (*.rijniv)|*.rijniv",
+                CheckFileExists = false
+            };
+            if (!saveFileDialog.ShowDialog().Value)
+            {
+                return;
+            }
+            if (File.Exists(saveFileDialog.FileName))
+            {
+                File.Delete(saveFileDialog.FileName);
+            }
+            using (var IVFileStream = new BinaryWriter(new FileStream(saveFileDialog.FileName, FileMode.CreateNew)))
+            {
+                IVFileStream.Write(GeneratedInitializationVector);
+            }
         }
 
     }
